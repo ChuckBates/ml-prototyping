@@ -68,16 +68,16 @@ namespace myMLApp
             var prediction = mlContext.Model.CreatePredictionEngine<IrisData, IrisPrediction>(model).Predict(
                 new IrisData()
                 {
-                    SepalLength = 3.3f,
-                    SepalWidth = 1.6f,
-                    PetalLength = 0.2f,
-                    PetalWidth = 5.1f,
+                    SepalLength = 5.5f,
+                    SepalWidth = 2.4f,
+                    PetalLength = 3.8f,
+                    PetalWidth = 1.1f,
                 });
 
             Console.WriteLine($"Predicted flower type is: {prediction.PredictedLabels}");
 
             Console.WriteLine("Press any key to exit....");
-            Console.ReadLine();
+            Console.ReadKey();
         }
     }
 }
