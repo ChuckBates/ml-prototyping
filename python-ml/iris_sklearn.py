@@ -60,4 +60,4 @@ singlePredict = knn.predict([[
 ]])
 
 print('predictions accuracy: ', accuracy_score(Y_validation, predictions))
-print('single predict: ', singlePredict)
+print('single predict: ', singlePredict) 
