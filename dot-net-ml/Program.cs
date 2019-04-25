@@ -1,6 +1,7 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
 using System;
+using System.Linq;
 
 // CS0649 compiler warning is disabled because some fields are only
 // assigned to dynamically by ML.NET at runtime
@@ -10,11 +11,6 @@ namespace myMLApp
 {
     class Program
     {
-        // STEP 1: Define your data structures
-        // IrisData is used to provide training data, and as
-        // input for prediction operations
-        // - First 4 properties are inputs/features used to predict the label
-        // - Label is what you are predicting, and is only set when training
         public class IrisData
         {
             [LoadColumn(0)]
@@ -37,34 +33,28 @@ namespace myMLApp
         public class IrisPrediction
         {
             [ColumnName("PredictedLabel")]
-            public string PredictedLabels;
+            public string PredictedLabel;
         }
 
         static void Main(string[] args)
         {
-            // STEP 2: Create a ML.NET environment
-            MLContext mlContext = new MLContext();
+            var mlContext = new MLContext();
 
-            // If working in Visual Studio, make sure the 'Copy to Output Directory'
-            // property of iris-data.txt is set to 'Copy always'
             IDataView trainingDataView = mlContext.Data.LoadFromTextFile<IrisData>(path: "iris-data.txt", hasHeader: false, separatorChar: ',');
-
-            // STEP 3: Transform your data and add a learner
-            // Assign numeric values to text in the "Label" column, because only
-            // numbers can be processed during model training.
-            // Add a learning algorithm to the pipeline. e.g.(What type of iris is this?)
-            // Convert the Label back into original text (after converting to number in step 3)
+            
             var pipeline = mlContext.Transforms.Conversion.MapValueToKey("Label")
                 .Append(mlContext.Transforms.Concatenate("Features", "SepalLength", "SepalWidth", "PetalLength", "PetalWidth"))
                 .AppendCacheCheckpoint(mlContext)
-                .Append(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(labelColumnName: "Label", featureColumnName: "Features"))
+                .Append(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy())
                 .Append(mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel"));
 
-            // STEP 4: Train your model based on the data set
+
+            var crossValidationResults = mlContext.MulticlassClassification.CrossValidate(trainingDataView, pipeline, 10);
+            var accuracies = crossValidationResults.Select(r => r.Metrics.MicroAccuracy);
+            Console.WriteLine($"Cross validation produced a {accuracies.Average():F} average accuracy");
+
             var model = pipeline.Fit(trainingDataView);
 
-            // STEP 5: Use your model to make a prediction
-            // You can change these numbers to test different predictions
             var prediction = mlContext.Model.CreatePredictionEngine<IrisData, IrisPrediction>(model).Predict(
                 new IrisData()
                 {
@@ -74,7 +64,7 @@ namespace myMLApp
                     PetalWidth = 1.1f,
                 });
 
-            Console.WriteLine($"Predicted flower type is: {prediction.PredictedLabels}");
+            Console.WriteLine($"Predicted flower type is: {prediction.PredictedLabel}");
 
             Console.WriteLine("Press any key to exit....");
             Console.ReadKey();
