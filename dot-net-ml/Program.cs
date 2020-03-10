@@ -65,8 +65,6 @@ namespace myMLApp
                 });
 
             Console.WriteLine($"Predicted flower type is: {prediction.PredictedLabel}");
-
-            Console.WriteLine("Press any key to exit....");
             Console.ReadKey();
         }
     }
